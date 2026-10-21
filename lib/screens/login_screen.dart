@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
+import 'dart:async'; //3.1 Importar el timer
  
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +21,33 @@ SMIBool? _isHandsUp;
 SMITrigger? _trigSuccess;
 SMITrigger? _trigFail;
 SMINumber? _numLook;
+
+//3.2 Timer para detener la mirada al dejar de escribir
+Timer? _typingDebounce;
+
+//2.1 Crear variables para focusNode
+final _emailFocusNode = FocusNode();
+final _passwordFocusNode = FocusNode();
+
+//2.2 Crear los listeners (Oyentes/Chismosos)
+@override
+void initState() {
+  super.initState();
+  _emailFocusNode.addListener(() {
+    if (_emailFocusNode.hasFocus) {
+      //Verificar que no sea nulo
+      if(_isHandsUp != null) {
+        //Ojos sin cerrar en email
+        _isHandsUp?.change(false);
+        _numLook?.value = 50; //3.3 Mirada neutral
+      }
+    }
+  });
+  _passwordFocusNode.addListener((){
+    //Manos arriba en passwordd
+    _isHandsUp?.change(_passwordFocusNode.hasFocus);
+  });
+}
  
   @override
   Widget build(BuildContext context) {
@@ -62,16 +90,35 @@ SMINumber? _numLook;
                 ),
                 //para separar el RiveAnimation del resto de los elementos
                 SizedBox(height: 10),
-                // texfield es para elegir el tipo de teclado
+                //Email
                 TextField(
+                  //2.3 Asignar foco al campo de texto
+                  focusNode: _emailFocusNode,
+                  //1.5 Vincular a campos de texto
                   onChanged: (value) {
-                    //1.5 Cambiar el valor de la variable de la máquina de estados
                     if(_isHandsUp != null) {
+                      //No tapes los ojos
                       _isHandsUp!.change(false);
                     }
- 
+                    //Si isCheking es null
                     if(_isChecking == null) return;
+                    //Activar el modo chismoso
                     _isChecking!.change(true);
+                    //3.4 Implementar numLook
+                    //Ajustes del 0 al 100
+                    //80 es medida de calibración. Clamp es el rango (abrazadera)
+                    final look = (value.length / 50.0 *100).clamp(0.0, 100.0);
+                    _numLook?.value = look;
+                  
+                    //3.5 Debounce: Si vuelve a teclear, reinicia el contador
+                    _typingDebounce
+                        ?.cancel(); //Cancelamos cualquier timer existente
+                    //Crear nuevo Timer
+                    _typingDebounce = Timer(const Duration(seconds: 3),(){
+                      //Si se cierra la pantalla (!mounted)
+                      if(!mounted) return;
+                      _isChecking?.change(false);
+                    });
                   },
                   //Para mostrar el teclado de correo electrónico
                   keyboardType: TextInputType.emailAddress,
@@ -86,12 +133,17 @@ SMINumber? _numLook;
                 const SizedBox(height: 10),
                 //contraseña
                 TextField(
+                  //2.3 Asignar foco al campo de texto
+                  focusNode: _passwordFocusNode,
+                  //1.5 Vincular a campos de texto
                    onChanged: (value) {
-                    //1.5 Cambiar el valor de la variable de la máquina de estados
                     if(_isChecking  != null) {
+                      //No tapes los ojos
                       _isChecking!.change(false);
                     }
+                    //Si isCheking es null
                     if(_isHandsUp == null) return;
+                    //Activar el modo chismoso
                     _isHandsUp!.change(true);
                   },
                   obscureText: _isObsure,
@@ -119,6 +171,15 @@ SMINumber? _numLook;
         ),
       ),
     );
+  }
+  @override
+  void dispose() {
+    //2.4 Liberar recursos de los focusNode
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    //3.5 Liberar Timer
+    _typingDebounce?.cancel();
+    super.dispose();
   }
 }
  

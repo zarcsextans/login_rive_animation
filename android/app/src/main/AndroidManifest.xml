@@ -1,9 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
+<!-- Permiso necesario para consumir Firebase y Spring Boot -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="login_rive_animation"
+        android:label="login_bear_animation_26_3_8sc"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

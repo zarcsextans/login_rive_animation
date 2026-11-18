@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
 import 'dart:async'; //3.1 Importar el timer
+import 'package:firebase_auth/firebase_auth.dart';
  
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

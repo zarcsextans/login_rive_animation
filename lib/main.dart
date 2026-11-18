@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'screens/firebase_options.dart';   
 import 'screens/login_screen.dart';
 
 Future<void> main() async {
-  // Encender el puente nativo antes de usar Firebase
+  // Enciende el puente nativo antes de usar Firebase
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar Firebase usando las credenciales de firebase_options.dart
+  // Conecta la app con tu proyecto de Firebase
   await Firebase.initializeApp(options: firebaseOptions);
 
-  runApp(const MyApp());
+  runApp(const MainApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const LoginScreen(),
+      home: LoginScreen(),  
+    
     );
   }
 }

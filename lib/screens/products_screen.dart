@@ -9,11 +9,11 @@ class ProductsScreen extends StatelessWidget {
   // - Web / iOS Simulator / macOS: usar http://localhost:8090
   // - Emulador Android: cambiar localhost por 10.0.2.2 (http://10.0.2.2:8090)
   // - Celular físico: usar la IP de tu computadora (ej. http://192.168.1.X:8090)
-  static const String baseUrl = 'http://192.168.0.155:8090';
+  static const String baseUrl = 'http://localhost:8090';
 
   // 6.2 Función para pedir la lista de productos al endpoint GET /products
   Future<List<dynamic>> fetchProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/products'));
+    final response = await http.get(Uri.parse('$baseUrl/products/all'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);

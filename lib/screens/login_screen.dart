@@ -37,9 +37,10 @@ final passCtrl=TextEditingController();//pregunta de examen: ¿para que sirve el
 // se puede usar para obtener el texto escrito por el usuario, para limpiar el campo de texto, para establecer un valor inicial, etc.
 //final cvvCtrl=TextEditingController(); 
 
-//4.2 Errores para mostrar en la UI
+/*4.2 Errores para mostrar en la UI
 String? emailError;
 String? passError;
+*/
 
 //5.2 Variable para mostrar el CircularProgressIndicator mientras carga
 bool _isLoading = false;
@@ -50,82 +51,92 @@ bool _isLoading = false;
     return re.hasMatch(email);
   }
 
-  bool isValidPassword(String pass) {
+  /*bool isValidPassword(String pass) {
     // mínimo 8, una mayúscula, una minúscula, un dígito y un especial
     final re = RegExp(
       r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$',
     );
     return re.hasMatch(pass);
-  }
+  }*/
+
   //4.4 Dar acción al botón
   //5.3 Convertir _onLogin en asíncrono (Future<void> ... async)
   Future<void> _onLogin() async {
-    //De lo que escribio el usuario, validar si es correcto y quitar los espacios en blanco
-    final email = emailCtrl.text.trim();
-    final pass = passCtrl.text;
+  final email = emailCtrl.text.trim();
+  final pass = passCtrl.text;
 
-    // Recalcular los errores
-    final emailTypeError = isValidEmail(email) ? null : 'Email inválido';
-    final passTypeError = isValidPassword(pass) ? null : 'Contraseña inválida';
+  // Cerrar el teclado y bajar las manos del osito
+  FocusScope.of(context).unfocus();
+  _typingDebounce?.cancel();
+  _isHandsUp?.change(false);
+  _isChecking?.change(false);
+  _numLook?.value = 50.0;
 
-    //4.5 Avisar que hubo un cambio y mostrarlo en la pantalla
+  // Validar únicamente que los campos no estén vacíos
+  if (email.isEmpty || pass.isEmpty) {
+    _trigFail?.fire();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Completa el correo y la contraseña.'),
+      ),
+    );
+    return;
+  }
+
+  // Activar el indicador de carga
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    // Autenticar en Firebase
+    await Future.delayed(const Duration(seconds: 2));
+
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: pass,
+    );
+
+    // Apagar loading y activar animación de éxito
     setState(() {
-      emailError = emailTypeError;
-      passError = passTypeError;
+      _isLoading = false;
     });
 
-    //4.6 Cerrar el teclado y bajar las manos
-    FocusScope.of(context).unfocus();
-    _typingDebounce?.cancel();
-    _isHandsUp?.change(false);
-    _isChecking?.change(false);
-    _numLook?.value = 50.0; // Mira neutral
+    _trigSuccess?.fire();
 
-    //4.9 (modificado) Si el formato es inválido, activar fallo y detener aquí
-    if (emailTypeError != null || passTypeError != null) {
-      _trigFail?.fire();
-      return;
-    }
+    await Future.delayed(const Duration(seconds: 2));
 
-    //5.4 Activar el CircularProgressIndicator
+    // Navegar a la pantalla de productos
+    if (!mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ProductsScreen(),
+      ),
+    );
+
+  } catch (e) {
+    // Credenciales incorrectas: apagar loading y activar fallo
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
 
-    try {
-      //5.5 Autenticar en Firebase (espera 2 s para ver el loading)
-      await Future.delayed(const Duration(seconds: 2));
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: pass,
-      );
+    _trigFail?.fire();
 
-      //5.6 Apagar loading, celebrar y esperar la animación
-      setState(() {
-        _isLoading = false;
-      });
-      _trigSuccess?.fire();
-      await Future.delayed(const Duration(seconds: 2));
+    // Mostrar un único mensaje general
+    if (!mounted) return;
 
-      //5.7 Navegar a la pantalla de productos
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ProductsScreen()),
-      );
-    } catch (e) {
-      //5.8 Credenciales incorrectas: apagar loading y osito triste
-      setState(() {
-        _isLoading = false;
-      });
-      _trigFail?.fire();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Credenciales inválidas. Verifica tu correo y contraseña.',
+        ),
+      ),
+    );
+  }
 
-      //Error general, sin marcar un campo específico (lo pide la tarea)
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Credenciales no válidas')),
-      );
-    }
   }
 
 //2.2 Crear los listenses(Oyentes/Chismosos)
@@ -221,8 +232,6 @@ void initState() {
                   //Para mostrar el teclado de correo electrónico
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    //4.9 Mostrar el texto de error 
-                    errorText: emailError,
                     hintText: "Email",
                     prefixIcon: Icon(Icons.email),
                     border: OutlineInputBorder(
@@ -248,8 +257,6 @@ void initState() {
                   },
                   obscureText: _isObsure,
                   decoration: InputDecoration(
-                    //4.9 Mostrar el texto de error 
-                    errorText: passError,
                     hintText: "Password",
                     prefixIcon: Icon(Icons.lock),
                     suffixIcon: IconButton(

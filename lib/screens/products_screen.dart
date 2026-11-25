@@ -69,9 +69,12 @@ appBar: AppBar(
               final product = products[index];
               return ListTile(
                 title: Text(product['name'].toString()),
-                subtitle: Text('Stock: ${product['stock']}'),
+                subtitle: Text(
+                  'Categoría: ${product['category']['category']}\n'
+                  'Stock: ${product['stock']}',
+                  ),
                 trailing: Text('\$${product['price']}'),
-              );
+            );
             },
           );
         },

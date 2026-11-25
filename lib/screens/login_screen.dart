@@ -4,6 +4,8 @@ import 'dart:async'; //3.1 importar timer
 //5.1 Importar Firebase Auth y la pantalla de productos
 import 'package:firebase_auth/firebase_auth.dart';
 import 'products_screen.dart';
+import 'sign_up_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -311,17 +313,22 @@ void initState() {
                       const Text("Don't have an account?"),
                       TextButton(
                         onPressed: () {
-                          // Acción al presionar el botón
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                             builder: (context) => const SignUpScreen(),
+                            ),
+                          );
                         },
                         child: const Text(
                           "Register",
                           style: TextStyle(
                             color: Colors.black,
                             decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.bold
-                          ),
-                          ),
+                            fontWeight: FontWeight.bold,
+                            ),
                         ),
+                      )
                     ],
                     
                   ),

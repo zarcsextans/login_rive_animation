@@ -140,6 +140,88 @@ bool _isLoading = false;
   }
 
   }
+  // Recuperar contraseña mediante Firebase
+Future<void> _onForgotPassword() async {
+  final resetEmailCtrl = TextEditingController(
+    text: emailCtrl.text.trim(),
+  );
+
+  try {
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Recuperar contraseña'),
+          content: TextField(
+            controller: resetEmailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Correo electrónico',
+              hintText: 'Ingresa tu correo registrado',
+              prefixIcon: Icon(Icons.email),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  resetEmailCtrl.text.trim(),
+                );
+              },
+              child: const Text('Enviar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (email == null) return;
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingresa tu correo electrónico.'),
+        ),
+      );
+      return;
+    }
+
+    await FirebaseAuth.instance.sendPasswordResetEmail(
+      email: email,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Solicitud enviada. Revisa tu correo electrónico.',
+        ),
+      ),
+    );
+
+  } on FirebaseAuthException catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'No se pudo enviar el correo de recuperación.',
+        ),
+      ),
+    );
+
+  } finally {
+    resetEmailCtrl.dispose();
+  }
+}
 
 //2.2 Crear los listenses(Oyentes/Chismosos)
 @override
@@ -280,12 +362,20 @@ void initState() {
                 SizedBox(height: 10),
                 SizedBox(
                   width: screenSize.width,
-                  child: const Text(
-                    "Forgot Password?",
-                    textAlign: TextAlign.right,
-                    style: TextStyle(decoration: TextDecoration.underline),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _onForgotPassword,
+                      child: const Text(
+                        "Forgot Password?",
+                        style: TextStyle(
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
+              
                 const SizedBox(height: 10),
                                 //4.13 Botón de login
                 MaterialButton(
